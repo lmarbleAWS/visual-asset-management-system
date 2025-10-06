@@ -201,7 +201,7 @@ export class AmplifyConfigLambdaConstruct extends Construct {
                     stackName: props.stackName!,
                     contentSecurityPolicy: "",
                     bannerHtmlMessage: props.config.app.webUi.optionalBannerHtmlMessage || "",
-                })
+                }, props.config.app.govCloud?.enabled || false)
             ),
             timeout: cdk.Duration.seconds(15),
         });
@@ -242,11 +242,35 @@ export class AmplifyConfigLambdaConstruct extends Construct {
         });
     }
 
-    private getJavascriptInlineFunction(props: InlineLambdaProps) {
-        const resp = JSON.stringify(props);
+    private getJavascriptInlineFunction(props: InlineLambdaProps, isGovCloud: boolean = false) {
+        // Create a copy of props to modify for GovCloud compatibility
+        const modifiedProps = { ...props };
+        
+        // Handle GovCloud identity pool ID formatting
+        if (modifiedProps.cognitoIdentityPoolId && modifiedProps.cognitoIdentityPoolId !== "undefined") {
+            if (isGovCloud) {
+                // Ensure the identity pool ID uses the correct GovCloud partition format
+                // Identity pool IDs should be in format: us-gov-region:uuid
+                // If it's currently in aws format, convert it to aws-us-gov format
+                if (modifiedProps.cognitoIdentityPoolId.includes(':')) {
+                    const parts = modifiedProps.cognitoIdentityPoolId.split(':');
+                    if (parts.length >= 2 && !parts[0].includes('gov')) {
+                        // Convert region format for GovCloud (e.g., us-east-1 -> us-gov-east-1)
+                        const govRegion = parts[0].replace(/^us-/, 'us-gov-');
+                        modifiedProps.cognitoIdentityPoolId = `${govRegion}:${parts[1]}`;
+                    }
+                }
+            }
+        }
+        
+        const resp = JSON.stringify(modifiedProps);
 
         return `
             exports.handler = async function(event, context) {
+                console.log('Amplify Config Request - Region:', '${props.region}');
+                console.log('Amplify Config Request - GovCloud Mode:', ${isGovCloud});
+                console.log('Amplify Config Request - Identity Pool ID:', '${modifiedProps.cognitoIdentityPoolId}');
+                
                 return {
                     headers: {
                         'Content-Type': 'application/json'
@@ -264,6 +288,10 @@ export class AmplifyConfigLambdaConstruct extends Construct {
                 return {
                     isAuthorized: true
                 }
+            }
+        `;
+    }
+}
             }
         `;
     }
