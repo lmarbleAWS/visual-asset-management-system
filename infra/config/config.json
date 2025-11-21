@@ -1,19 +1,19 @@
 {
     "name": "vams",
     "env": {
-        "account": null,
-        "region": null,
+        "account": "304157583660",
+        "region": "us-east-1",
         "loadContextIgnoreVPCStacks": false
     },
     "app": {
-        "baseStackName": "prod",
+        "baseStackName": "chatbot-demo",
         "assetBuckets": {
             "createNewBucket": true,
             "defaultNewBucketSyncDatabaseId": "default",
             "externalAssetBuckets": null
         },
         "adminUserId": "administrator",
-        "adminEmailAddress": "adminEmail@example.com",
+        "adminEmailAddress": "lmarble@amazon.com",
         "useFips": false,
         "useWaf": true,
         "addStackCloudTrailLogs": true,

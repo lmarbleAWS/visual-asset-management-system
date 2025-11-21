@@ -41,9 +41,27 @@ const PotreeViewerComponent: React.FC<ViewerPluginProps> = ({ assetId, databaseI
                 let fileKey = assetKey + "/preview/PotreeViewer/metadata.json";
                 let url = `${config.api}database/${databaseId}/assets/${assetId}/auxiliaryPreviewAssets/stream/${fileKey}`;
 
-                const authHeader = {
-                    Authorization: `Bearer ${Auth.Credentials.Auth.user.signInUserSession.idToken.jwtToken}`,
-                };
+                // Get authentication token based on auth mode
+                let authHeader: { Authorization: string } | {} = {};
+                try {
+                    if (window.DISABLE_COGNITO) {
+                        const oauth2TokenStr = localStorage.getItem("oauth2_token");
+                        if (oauth2TokenStr) {
+                            const oauth2Token = JSON.parse(oauth2TokenStr);
+                            authHeader = {
+                                Authorization: `Bearer ${oauth2Token.accessToken}`,
+                            };
+                        }
+                    } else {
+                        const session = await Auth.currentSession();
+                        const token = session.getAccessToken().getJwtToken();
+                        authHeader = {
+                            Authorization: `Bearer ${token}`,
+                        };
+                    }
+                } catch (authError) {
+                    console.warn("Failed to get authentication token:", authError);
+                }
 
                 // If we get here, the files are available, proceed with loading
                 if (engineElement.current) {

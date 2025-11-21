@@ -10,6 +10,7 @@ import { HashRouter } from "react-router-dom";
 import { TopNavigation } from "@cloudscape-design/components";
 import { AppRoutes } from "./routes";
 import logoWhite from "./resources/img/logo_white.png";
+import ChatButton from "./components/chat/ChatButton";
 import "@aws-amplify/ui-react/styles.css";
 
 const HeaderPortal = ({ children }) => {
@@ -98,6 +99,8 @@ function App() {
                     setNavigationOpen={setNavigationOpen}
                 />
             </HashRouter>
+            {/* AI Chat Assistant - Available on all pages */}
+            {user && <ChatButton />}
         </>
     );
 }

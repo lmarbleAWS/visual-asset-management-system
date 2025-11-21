@@ -75,6 +75,7 @@ import {
 import { buildRoleService, buildCreateRoleFunction } from "../../lambdaBuilder/roleFunctions";
 import { buildUserRolesService } from "../../lambdaBuilder/userRoleFunctions";
 import { buildSendEmailFunction } from "../../lambdaBuilder/sendEmailFunctions";
+import { buildChatHandler } from "../../lambdaBuilder/chatFunctions";
 import { NagSuppressions } from "cdk-nag";
 import * as Config from "../../../config/config";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
@@ -1152,6 +1153,23 @@ export class ApiBuilderNestedStack extends NestedStack {
 
         attachFunctionToApi(this, authFunctions.authLoginProfile, {
             routePath: "/auth/loginProfile/{userId}",
+            method: apigateway.HttpMethod.POST,
+            api: api,
+        });
+
+        // Chat Resources - AI Assistant powered by AWS Bedrock
+        const chatHandler = buildChatHandler(
+            this,
+            lambdaCommonBaseLayer,
+            storageResources.dynamo.databaseStorageTable,
+            storageResources.dynamo.assetStorageTable,
+            config,
+            vpc,
+            subnets,
+            storageResources.encryption.kmsKey
+        );
+        attachFunctionToApi(this, chatHandler, {
+            routePath: "/chat/message",
             method: apigateway.HttpMethod.POST,
             api: api,
         });

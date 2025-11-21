@@ -79,16 +79,29 @@ const CesiumViewerComponent: React.FC<ViewerPluginProps> = ({
     // Helper function to get authentication headers
     const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
         try {
-            const session = await Auth.currentSession();
-            const idToken = session.getIdToken().getJwtToken();
-            return {
-                Authorization: `Bearer ${idToken}`,
-                "Content-Type": "application/json",
-            };
+            if (window.DISABLE_COGNITO) {
+                // External OAuth mode
+                const oauth2TokenStr = localStorage.getItem("oauth2_token");
+                if (oauth2TokenStr) {
+                    const oauth2Token = JSON.parse(oauth2TokenStr);
+                    return {
+                        Authorization: `Bearer ${oauth2Token.accessToken}`,
+                        "Content-Type": "application/json",
+                    };
+                }
+            } else {
+                // Cognito mode
+                const session = await Auth.currentSession();
+                const token = session.getAccessToken().getJwtToken();
+                return {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                };
+            }
         } catch (error) {
             console.warn("Failed to get auth headers:", error);
-            return {};
         }
+        return {};
     }, []);
 
     // Helper function to construct streaming URL
